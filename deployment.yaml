@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: homepage
+  name: aboutpage
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: home
+      app: about
   template:
     metadata:
       labels:
-        app: home
+        app: about
     spec:
       containers:
-      - name: homepage-con
-        image: curion22/homepage:latest
+      - name: aboutpage-con
+        image: curion22/aboutpage:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
@@ -22,10 +22,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: homepage-service
+  name: aboutpage-service
 spec:
   selector:
-    app: home
+    app: about
   ports:
   - protocol: TCP
     port: 80
