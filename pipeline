@@ -1,0 +1,33 @@
+pipeline{
+    agent any 
+    stages{
+        stage("git checkout"){
+            steps{
+                git branch: 'contact', url: 'https://github.com/rahulsingodia/demo-pipeline.git'
+            }
+        }
+        stage("Image Creation"){
+            steps{
+                sshPublisher(publishers: [sshPublisherDesc(configName: 'SSH-Server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '''cd /var/lib/jenkins/workspace/contactpage
+docker build -t $JOB_NAME:v$BUILD_ID .
+docker tag  $JOB_NAME:v$BUILD_ID curion22/$JOB_NAME:v$BUILD_ID
+docker tag  $JOB_NAME:v$BUILD_ID curion22/$JOB_NAME:latest
+''', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+            }
+        }
+        stage("Image push"){
+            steps{
+                sshPublisher(publishers: [sshPublisherDesc(configName: 'SSH-Server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '''docker push curion22/$JOB_NAME:v$BUILD_ID
+docker push curion22/$JOB_NAME:latest''', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+            }
+        }
+        stage("deployment"){
+            steps{
+                withKubeConfig(caCertificate: '', clusterName: 'ap2v-cluster', contextName: '', credentialsId: 'kubeconfig', namespace: 'ap2v', restrictKubeConfigAccess: false, serverUrl: 'https://A08E1C4C61346307102451B0BCCC78A5.gr7.ap-south-1.eks.amazonaws.com') {
+                   sh "kubectl apply -f deployment.yaml"
+                   sh "kubectl set image deployment/contactpage contactpage-con=curion22/${JOB_NAME}:v${BUILD_ID} -n ap2v"
+}
+            }
+        }
+    }
+}
